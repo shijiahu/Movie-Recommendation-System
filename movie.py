@@ -161,7 +161,7 @@ def calSimilarItems(data,num=10):
          ItemAllMatches[movie] = topmatches(moviedata, movie, num,simscore = sim_pearson)
     return ItemAllMatches
 
-print(calSimilarItems(data))
+
 '''
 # Dictionary for movies similarity： key = movie ,value = [(othermovie,simscore)]。
 
@@ -173,6 +173,57 @@ print(calSimilarItems(data))
 '''
 
 
+
+
+
+
+'''
+a movie unwatched = sum(this movie's similarity with all movie has been watched * rating)
+                            / this movie's similarity with all movie has been watched
+for example:
+    unwatched movie: A
+    watched movie: B, C
+Score of A =  [sim(A,B)*rating(B) +sim(A,C)*rating(C)] / [ sim(A,B) + sim(A,C)]
+'''
+def getrecommendations(data,targetperson,moviesAllsimilarity):
+    '''
+    input movieAllSimilarity is the result of calsimilarItems
+     '''
+    # get all similarity set of all movies
+    scoresum = {}
+    simsum = {}
+    # traverse all movie watched
+    for watchedmovie in data[targetperson]:
+        rating = data[targetperson][watchedmovie]
+        # traverse all movies similar to current movie
+        for (similarity,newmovie) in moviesAllsimilarity[watchedmovie]:   # get a tuple
+            
+            if newmovie in data[targetperson]:
+                # watched
+                continue
+            scoresum.setdefault(newmovie,0)
+            simsum.setdefault(newmovie,0)
+            # sum of all similarity
+            simsum[newmovie] += similarity
+            
+            scoresum[newmovie] += rating * similarity
+            
+    rankings = [(score/simsum[newmovie], newmovie) for newmovie,score in scoresum.items()]
+
+    rankings.sort(reverse=True)
+    return rankings
+
+
+'''
+itemsAllsim = calSimilarItems(data)    
+print('Based on filter of movie，recommendation movies for uset Toby:')
+print(getrecommendations(data, 'Toby',itemsAllsim))
+
+# Result
+
+[(3.1667425234070894, 'The Night Listener'), (2.936629402844435, 'Just My Luck'), (2.868767392626467, 'Lady in the Water')]
+
+'''
 
 
 
