@@ -47,8 +47,7 @@ def transformdata(data):
     return newdata
 
 '''
-
-print transformdata(data)
+print(transformdata(data))
 
 {'Lady in the Water': {'Lisa Rose': 2.5, 'Jack Matthews': 3.0, 'Michael Phillips': 2.5, 'Gene Seymour': 3.0, 'Mick LaSalle': 3.0}, 
 'Snakes on a Plane': {'Jack Matthews': 4.0, 'Mick LaSalle': 4.0, 'Claudia Puig': 3.5, 'Lisa Rose': 3.5, 'Toby': 4.5, 'Gene Seymour': 3.5, 'Michael Phillips': 3.0},
@@ -78,7 +77,8 @@ def sim_pearson(data,person1,person2):
     计算上面格式的数据里的两个用户相似度.
     基于用户过滤思路：找出两个用户看过的相同电影的评分，从而进行按pearson公式求值。那些非公共电影不列入求相似度值范围。
     基于电影过滤思路：找过两部电影相同的观影人给出的评分，从而按pearson公式求值
-    返回：评分的相似度，[-1,1]范围，0最不相关，1，-1为正负相关，等于1时，表示两个用户完全一致评分
+    返回：评分的相似度，[-1,1]范围，0最不相关，1，-1为正负相关，
+    等于1时，表示两个用户完全一致评分
     这里的data格式很重要，这里计算相似度是严格按照上面data格式所算。
     此字典套字典格式，跟博客计算单词个数 存储格式一样 
     '''
@@ -114,37 +114,63 @@ def sim_pearson(data,person1,person2):
     return num/den
 
 
-# Return best matched for single movie
+# Return top matched for a movie
+# default return 5 movie and using pearson similarity 
+def topmatches(data, givenperson, returnernum = 5, simscore = sim_pearson):
+    '''
+    input: (based on user filter) recommend 5 users
+            ------given a person, return people with the same interests
+            OR  
+            (based on movie filter) recommend 5 movies
+            ------given a movie, return movie with similar movies
+    '''
 
-def topmatches(data,givenperson ,returnernum = 5,simscore = sim_pearson):
-    '''
-    用户匹配推荐：给定一个用户，返回对他口味最匹配的其他用户
-    物品匹配： 给定一个物品，返回相近物品
-    输入参数：对person进行默认推荐num=5个用户（基于用户过滤），或是返回5部电影物品（基于物品过滤），相似度计算用pearson计算
-    '''
-    #建立最终结果列表
+    # Result list
     usersscores =[(simscore(data,givenperson,other),other) for other in data if other != givenperson ]
-    #对列表排序
-    usersscores.sort(cmp=None, key=None, reverse=True)
+
+    # sort the list in the descending order
+    usersscores.sort(reverse=True)
     
+    # default return top 5
     return usersscores[0:returnernum]
 
 
 
-    '''
-调用以前方法：找物品相关匹配：
+'''
 moviedata = transformdata(data)
-#找出跟“超人回归”这电影相关的电影
-print topmatches(moviedata, 'Superman Returns')
 
-结果是： 
+# find the similar movie with 'Superman Returns'
+print(topmatches(moviedata, 'Superman Returns'))
+
+Result:
 [(0.6579516949597695, 'You, Me and Dupree'), (0.4879500364742689, 'Lady in the Water'), 
 (0.11180339887498941, 'Snakes on a Plane'), (-0.1798471947990544, 'The Night Listener'), (-0.42289003161103106, 'Just My Luck')]
-其中负数表示，讨厌此电影
-    '''
+negative number means hate the movie...
+
+'''
 
 
+# based on "topmatches" function, return all movies matches result
 
+def calSimilarItems(data,num=10):
+    moviedata = transformdata(data)
+    ItemAllMatches = {}
+    for movie in moviedata:
+         ItemAllMatches.setdefault(movie,[])
+         # for each movie, calculate its match movie set, using Euclidean Distance Similarity or Pearson
+         ItemAllMatches[movie] = topmatches(moviedata, movie, num,simscore = sim_pearson)
+    return ItemAllMatches
+
+print(calSimilarItems(data))
+'''
+# Dictionary for movies similarity： key = movie ,value = [(othermovie,simscore)]。
+
+print(calSimilarItems(data))
+
+{'Lady in the Water': [(0.7637626158259785, 'Snakes on a Plane'), (0.4879500364742689, 'Superman Returns'), (0.3333333333333333, 'You, Me and Dupree'), (-0.6123724356957927, 'The Night Listener'), (-0.9449111825230676, 'Just My Luck')],
+ 'Snakes on a Plane': [(0.7637626158259785, 'Lady in the Water'), (0.11180339887498941, 'Superman Returns'), (-0.3333333333333333, 'Just My Luck'), (-0.5663521139548527, 'The Night Listener'), (-0.6454972243679047, 'You, Me and Dupree')], 
+'Just My Luck': [(0.5555555555555556, 'The Night Listener'), (-0.3333333333333333, 'Snakes on a Plane'), (-0.42289003161103106, 'Superman Returns'), (-0.4856618642571827, 'You, Me and Dupree'), (-0.9449111825230676, 'Lady in the Water')],  .........
+'''
 
 
 
